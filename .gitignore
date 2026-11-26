@@ -1,0 +1,20 @@
+# Dépendances et artefacts de build
+node_modules/
+dist/
+.vite/
+
+# Livret Print & Play officiel (10 Mo, document éditeur non redistribué)
+Par-OdinPNP.pdf
+
+# Logs et variables locales
+*.log
+npm-debug.log*
+.env
+.env.*
+
+# Outils temporaires, IDE et système
+.playwright-mcp/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
