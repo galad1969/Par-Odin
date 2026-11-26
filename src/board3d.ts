@@ -384,12 +384,17 @@ export class Board3D {
 
   resetCamera() {
     const portrait = window.innerHeight > window.innerWidth;
+    const compactLandscape = !portrait && window.innerHeight < 520;
     if (portrait) {
       this.camera.position.set(0, 24.5, 11.8);
+      this.controls.target.set(0, 0, -0.15);
+    } else if (compactLandscape) {
+      this.camera.position.set(0, 13.6, 10.6);
+      this.controls.target.set(0, 0, -0.85);
     } else {
       this.camera.position.set(0, 12.2, 9.6);
+      this.controls.target.set(0, 0, -0.15);
     }
-    this.controls.target.set(0, 0, -0.15);
     this.controls.update();
   }
 
