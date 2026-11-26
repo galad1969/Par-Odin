@@ -90,6 +90,7 @@ const solutionNavEl = document.getElementById('solution-nav')!;
 const solutionIndexEl = document.getElementById('solution-index')!;
 const btnAid = document.getElementById('btn-aid')!;
 const aidLabel = document.getElementById('aid-label')!;
+const btnLandscape = document.getElementById('btn-landscape') as HTMLButtonElement;
 const btnInstall = document.getElementById('btn-install') as HTMLButtonElement;
 const btnSound = document.getElementById('btn-sound')!;
 const btnVerify = document.getElementById('btn-verify') as HTMLButtonElement;
@@ -745,6 +746,17 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 }
 
+function tryLockLandscape() {
+  const orientation = screen.orientation as ScreenOrientation & {
+    lock?: (orientation: string) => Promise<void>;
+  };
+  if (orientation && typeof orientation.lock === 'function') {
+    void orientation.lock('landscape').catch(() => {
+      // Browsers require fullscreen or standalone mode to lock orientation
+    });
+  }
+}
+
 function setupMobileInstall() {
   const win = window as unknown as {
     Capacitor?: { isNativePlatform?: () => boolean };
@@ -757,6 +769,42 @@ function setupMobileInstall() {
   if (!isNative && 'serviceWorker' in navigator) {
     registerSW({ immediate: true });
   }
+
+  // Attempt landscape lock immediately (works automatically in standalone PWA / WebAPK / APK)
+  tryLockLandscape();
+
+  const updateLandscapeButton = () => {
+    const isPortrait = window.innerHeight > window.innerWidth;
+    const isTouchMobile = window.matchMedia('(pointer: coarse)').matches || /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+    const canShow = !isNative && isTouchMobile && isPortrait;
+    btnLandscape.classList.toggle('hidden', !canShow);
+  };
+
+  window.addEventListener('resize', updateLandscapeButton);
+  window.addEventListener('orientationchange', () => {
+    updateLandscapeButton();
+    if (isStandalone) tryLockLandscape();
+  });
+  updateLandscapeButton();
+
+  btnLandscape.addEventListener('click', async () => {
+    try {
+      if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+      }
+      const orientation = screen.orientation as ScreenOrientation & {
+        lock?: (orientation: string) => Promise<void>;
+      };
+      if (orientation && typeof orientation.lock === 'function') {
+        await orientation.lock('landscape');
+        updateLandscapeButton();
+        return;
+      }
+    } catch {
+      // Orientation lock unsupported (e.g. iOS Safari or blocked by browser)
+    }
+    showToast('Pivote ton téléphone à l’horizontale pour le mode Paysage.', 'info', 3000);
+  });
 
   if (isNative || isStandalone) {
     btnInstall.classList.add('hidden');
