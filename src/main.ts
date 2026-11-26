@@ -787,13 +787,17 @@ function setupMobileInstall() {
 
   btnInstall.addEventListener('click', async () => {
     if (deferredPrompt) {
-      await deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        deferredPrompt = null;
-        btnInstall.classList.add('hidden');
+      try {
+        await deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          deferredPrompt = null;
+          btnInstall.classList.add('hidden');
+        }
+        return;
+      } catch {
+        // Fallback to instruction modal if prompt fails
       }
-      return;
     }
     if (isIOS) {
       openModal(`
@@ -811,14 +815,19 @@ function setupMobileInstall() {
       `);
       return;
     }
+    const previewNote = window.location.hostname.includes('.run.app')
+      ? '<br /><br /><small>Note : sur l’adresse privée d’aperçu AI Studio, Chrome Android ne permet souvent qu’un raccourci. Pour une vraie installation hors-ligne ou un fichier APK, utilise une adresse publique ou le projet <code>android/</code>.</small>'
+      : '';
     openModal(`
       <div class="modal-head">
         <h2>Installer sur Android</h2>
         <button class="mini-btn" data-close-modal>✕</button>
       </div>
       <p class="modal-lead">
-        Dans Chrome sur Android, ouvre le menu <strong>⋮</strong> en haut à droite puis touche
-        <strong>Installer l'application</strong> (ou <strong>Ajouter à l'écran d'accueil</strong>) pour jouer en plein écran hors-ligne.
+        Pour installer l'application sur ton téléphone :<br /><br />
+        1. Ouvre le menu <strong>⋮</strong> (les trois petits points) en haut à droite de <strong>Chrome</strong>.<br />
+        2. Touche <strong>Installer l'application</strong> (ou <strong>Ajouter à l'écran d'accueil</strong>).<br /><br />
+        L'icône apparaîtra sur ton bureau et tu pourras y jouer en plein écran, même hors-ligne !${previewNote}
       </p>
       <div class="modal-actions">
         <button class="action-btn primary" data-close-modal>Compris</button>
